@@ -1,38 +1,24 @@
-import { auth } from "@/auth";
-import SignIn from "@/components/sign-in";
-import { SignOut } from "@/components/signout-button";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { database } from "@/db/database";
-import { items } from "@/db/schema";
-import { revalidatePath } from "next/cache";
+import helper from "@/lib/helper";
 
 export default async function HomePage() {
   const allItems = await database.query.items.findMany();
-  const session = await auth();
-  return (
-    <main className="container mx-auto py-10">
-      {session ? <SignOut /> : <SignIn />}
-      <form
-        action={async (formData: FormData) => {
-          "use server";
-          const data = formData.get("name") as string;
-          console.log(data);
-          await database.insert(items).values({
-            name: formData.get("name") as string,
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            userId: session?.user?.id!,
-          });
-          revalidatePath("/");
-        }}
-      >
-        <Input name="name" placeholder="Enter your item" />
-        <Button type="submit">Post Item</Button>
-      </form>
 
-      {allItems.map((item) => (
-        <div key={item.id}>{item.name}</div>
-      ))}
+  return (
+    <main className="container mx-auto py-8 space-y-4">
+      <h1 className="font-bold text-4xl">Post for Sales</h1>
+
+      <div className="grid lg:grid-cols-4 md:grid-cols-2 gap-8">
+        {allItems.map((item) => (
+          <Card key={item.id} className="p-5">
+            <CardHeader>{item.name}</CardHeader>
+            <CardContent>
+              {helper.convertCentsToDollars(item.startingPrice)}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </main>
   );
 }
